@@ -12,10 +12,10 @@ class SagaSuite extends munit.CatsEffectSuite {
     given Stepper[IO] = Stepper.default[IO]
 
     val step1 = IO.println("Step-1").as(1)
-    val step2 = IO.println("Step-2").as("2")
+    val step2 = IO.println("Step-2") *> IO.raiseError(new Exception("errr"))
 
     val saga = for
-      first  <- step1.compensate(e => IO.println("Rollback Step1"))
+      first  <- step1.compensate(e => IO.println("Rollback Step1") *> IO.raiseError(new Exception("rollback error")))
       second <- step2.compensate(e => IO.println("Rollback Step2"))
     yield second
 
@@ -23,6 +23,5 @@ class SagaSuite extends munit.CatsEffectSuite {
       r <- saga.run()
       _ <- IO.println(r)
     yield ()
-
   }
 }

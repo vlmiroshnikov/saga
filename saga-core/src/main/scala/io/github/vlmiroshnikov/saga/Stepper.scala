@@ -1,0 +1,47 @@
+package io.github.vlmiroshnikov.saga
+
+import cats.*
+import cats.syntax.all.*
+
+trait Stepper[F[_]]:
+  def run[A](saga: Step[F, A]): F[A]
+
+object Stepper:
+
+  def default[F[_]: MonadThrow]: Stepper[F] = new Stepper[F] {
+    val F = MonadThrow[F]
+
+    override def run[A](saga: Step[F, A]): F[A] = {
+
+      def go[X](step: Step[F, X]): F[Direction[F, X]] =
+        step match
+          case Step.Pure(value) => Direction.Forward(value, F.unit).pure[F]
+          case Step.Next(action, compensate) =>
+            action.attempt.flatMap { result =>
+              result match
+                case Left(e)  => Direction.Rollback(e, compensate(result)).pure[F]
+                case Right(v) => Direction.Forward(v, compensate(result)).pure[F]
+            }
+
+          case Step.FlatMap(fa: Step[F, _], cont: (Any => Step[F, X])) =>
+            go(fa).flatMap {
+              case Direction.Forward(v, prevRollback: F[Unit]) =>
+                go(cont(v)).attempt.flatMap {
+                  case Right(Direction.Forward(r, rollback)) =>
+                    Direction.Forward(r, rollback *> prevRollback).pure[F]
+                  case Right(Direction.Rollback(e, rollback)) =>
+                    Direction.Rollback(e, rollback *> prevRollback).pure[F]
+                  case Left(e) =>
+                    F.raiseError(e)
+                }
+              case err @ Direction.Rollback(_, _) =>
+                err.asInstanceOf[Direction[F, X]].pure[F]
+            }
+
+      go(saga).flatMap {
+        case Direction.Forward(a, _) => a.pure[F]
+        case Direction.Rollback(e, rollback) =>
+          rollback *> F.raiseError(e)
+      }
+    }
+  }

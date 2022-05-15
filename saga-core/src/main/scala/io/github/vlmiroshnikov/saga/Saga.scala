@@ -18,7 +18,9 @@ object Saga:
   type TL[F[_]] = [A] =>> Saga[F, A]
 
   extension [F[_]: Stepper, A](saga: Saga[F, A])
-    def run(): F[A] = summon[Stepper[F]].run(saga.asInstanceOf[Wrap[F, A]].step)
+
+    def run(): F[Either[Throwable, A]] =
+      summon[Stepper[F]].run(saga.asInstanceOf[Wrap[F, A]].step)
 
   given [F[_]]: Monad[TL[F]] with
 

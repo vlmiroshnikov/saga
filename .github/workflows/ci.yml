@@ -20,16 +20,16 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [3.3.1]
-        java: [adopt@1.11]
+        java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v14
         with:
           java-version: ${{ matrix.java }}
 
@@ -44,16 +44,16 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [3.3.1]
-        java: [adopt@1.11]
+        java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v14
         with:
           java-version: ${{ matrix.java }}
 

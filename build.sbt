@@ -1,5 +1,6 @@
-import Settings._
-import xerial.sbt.Sonatype._
+import Settings.*
+import sbtghactions.JavaSpec.Distribution
+import xerial.sbt.Sonatype.*
 
 val versionV = "0.0.3"
 
@@ -9,7 +10,7 @@ ThisBuild / scalaVersion := Versions.dotty
 ThisBuild / githubWorkflowTargetTags           ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / githubWorkflowPublish               := Seq(WorkflowStep.Sbt(List("release")))
-ThisBuild / githubWorkflowJavaVersions          := Seq(JavaSpec.temurin("11"))
+ThisBuild / githubWorkflowJavaVersions          := Seq(JavaSpec(Distribution.Adopt, "17"))
 ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(List("compile"))
 )
@@ -24,6 +25,9 @@ ThisBuild / githubWorkflowPublish := Seq(
     )
   )
 )
+
+ThisBuild / versionScheme := Some("early-semver")
+
 ThisBuild / credentials += Credentials("Sonatype Nexus Repository Manager",
                                        "oss.sonatype.org",
                                        sys.env.getOrElse("SONATYPE_USERNAME", ""),
@@ -74,17 +78,3 @@ lazy val `saga-core` = project
     libraryDependencies ++= cats ++ catsEffect ++ munit ++ munitEffect
   )
   .settings(publishSettings)
-
-// lazy val example = project
-//   .in(file("example"))
-//   .dependsOn(`saga-core`)
-//   .settings(
-//     name                 := "example",
-//     libraryDependencies ++= munit ++ munitEffect ++ catsEffect ++ cats
-//   )
-//   .settings(
-//     publish         := {},
-//     publishLocal    := {},
-//     publishArtifact := false,
-//     publish / skip  := true
-//   )

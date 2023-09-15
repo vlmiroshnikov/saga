@@ -17,12 +17,12 @@ object Stepper:
         step match
           case Step.Pure(value) => Direction.Forward(value, F.unit).pure[F]
           case Step.Next(action, compensate) =>
-            action.attempt.flatMap {
-              case result @ Left(e)  => Direction.Rollback(e, compensate(result)).pure[F]
-              case result @ Right(v) => Direction.Forward(v, compensate(result)).pure[F]
+            action.attempt.map {
+              case result @ Left(e)  => Direction.Rollback(e, compensate(result))
+              case result @ Right(v) => Direction.Forward(v, compensate(result))
             }
 
-          case Step.FlatMap(fa: Step[F, _], cont: (Any => Step[F, X])) =>
+          case Step.FlatMap(fa, cont) =>
             go(fa).flatMap {
               case Direction.Forward(v, prevRollback: F[Unit]) =>
                 go(cont(v)).attempt.flatMap {

@@ -4,14 +4,13 @@ import cats.*
 import cats.syntax.all.*
 
 trait Stepper[F[_]]:
-  def run[A](saga: Step[F, A]): F[Either[Throwable, A]]
+  def runStep[A](saga: Step[F, A]): F[Either[Throwable, A]]
 
 object Stepper:
 
-  def default[F[_]: MonadThrow]: Stepper[F] = new Stepper[F] {
-    val F = MonadThrow[F]
+  def default[F[_]](using F: MonadThrow[F]): Stepper[F] = new Stepper[F] {
 
-    override def run[A](saga: Step[F, A]): F[Either[Throwable, A]] = {
+    override def runStep[A](saga: Step[F, A]): F[Either[Throwable, A]] = {
 
       def go[X](step: Step[F, X]): F[Direction[F, X]] =
         step match

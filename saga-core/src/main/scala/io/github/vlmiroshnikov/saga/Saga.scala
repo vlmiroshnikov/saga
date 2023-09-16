@@ -14,10 +14,10 @@ extension [F[_], A](fa: F[A])
 
 object Saga:
 
-  extension [F[_]: Stepper, A](saga: Saga[F, A])
+  extension [F[_], A](saga: Saga[F, A])
 
-    def run(): F[Either[Throwable, A]] =
-      summon[Stepper[F]].run(saga.step)
+    def run(using stepper: Stepper[F]): F[Either[Throwable, A]] =
+      stepper.runStep(saga.step)
 
   given [F[_]]: Monad[[A] =>> Saga[F, A]] with
 
@@ -33,7 +33,7 @@ object Saga:
         case Right(b) => pure(b)
       }
 
-  case class Wrap[F[_], A](step: Step[F, A]) extends Saga[F, A](step):
+  private[saga] case class Wrap[F[_], A](step: Step[F, A]) extends Saga[F, A](step):
 
     override def map[B](f: A => B): Saga[F, B] =
       flatMap(a => Wrap(Step.Pure(f(a))))
